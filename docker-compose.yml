@@ -61,8 +61,10 @@ services:
         syslog-address: "unixgram:///dev/log"
 
   openldap:
-    image: osixia/openldap:latest
-    restart: unless-stopped
+    image: adrianp1988/openldap:latest
+    build: ./openldap/
+    domainname: ${DEFAULT_DOMAIN}
+    restart: always
     hostname: openldap
     volumes:
       - openldap:/var/lib/ldap
