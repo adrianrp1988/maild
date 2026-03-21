@@ -20,7 +20,7 @@ RUN apt-get update && \
         gpg \
         netcat \
         bind9-host \
-        postgresql-client && \
+        ldap-utils && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
