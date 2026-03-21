@@ -3,12 +3,14 @@ networks:
     external: true
 
 volumes:
+  openldap:
+  slapd:
+  certs:
   vmail: # mail storage
   spool: # temp mail storage
   clamav: # AV storage 
   amavis: # filtering storage
   spamassassin: # spam data 
-  db: # database storage
 
 
 services:
@@ -20,7 +22,6 @@ services:
     hostname: cron
     restart: always
     env_file:
-      - vars/db.env
       - vars/amavis.env
       - .env
     volumes:
@@ -59,44 +60,40 @@ services:
       options:
         syslog-address: "unixgram:///dev/log"
 
-  db:
-    image: pavelmc/maild_db:latest
-    build: ./db/
-    container_name: maild-db
-    hostname: db
-    restart: always
-    env_file:
-      - vars/db.env
-      - vars/mua.env
-      - .env
+  openldap:
+    image: osixia/openldap:latest
+    restart: unless-stopped
+    hostname: openldap
     volumes:
-      - db:/var/lib/postgresql/data
-    networks:
-      - maild
-
-  admin:
-    image: pavelmc/maild_admin:latest
-    build: ./admin/
-    container_name: maild-admin
-    hostname: admin
-    restart: always
-    # ports:
-    #   - "8080:80"
-    environment:
-      POSTFIXADMIN_DB_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTFIXADMIN_SETUP_PASSWORD: ${POSTFIXADMIN_SETUP_PASSWORD}
+      - openldap:/var/lib/ldap
+      - slapd:/etc/ldap/slapd.d
+      - certs:/container/service/slapd/assets/certs
     env_file:
-      - vars/db.env
-      - vars/admin.env
+      - vars/openldap.env
       - .env
-    depends_on:
-      - db
+    environment:
+      - LDAP_DOMAIN=${DEFAULT_DOMAIN}
+    ports:
+      - 389:389/tcp
     networks:
       - maild
-    logging: # See https://docs.docker.com/config/containers/logging/syslog/
-      driver: syslog
-      options:
-        syslog-address: "unixgram:///dev/log"
+  openldap-admin:
+    image: wheelybird/luminary:latest
+    container_name: openldap-admin
+    env_file:
+      - vars/openldap-ui.env
+      - .env
+    environment:
+      - EMAIL_DOMAIN=${DEFAULT_DOMAIN}
+      - LDAP_ADMIN_BIND_DN=cn=admin,${LDAP_BASE_DN}
+      - LDAP_ADMIN_BIND_PWD=${LDAP_ADMIN_PASSWORD}
+    depends_on:
+      - openldap
+    ports:
+      - 8080:80
+      - 8443:443
+    networks:
+      - maild
 
   amavis:
     image: pavelmc/maild_amavis:latest
@@ -108,7 +105,6 @@ services:
     # ports:
     #   - "8060:80"
     env_file:
-      - vars/db.env
       - vars/mua.env
       - .env
     depends_on:
@@ -128,7 +124,7 @@ services:
     hostname: mda
     restart: always
     env_file:
-      - vars/db.env
+      - vars/openldap.env
       - vars/mda.env
       - vars/ssl.env
       - .env
@@ -140,7 +136,7 @@ services:
       # - "4190"
       # - "12345"
     depends_on:
-      - db
+      - openldap
     volumes:
       - vmail:/home/vmail
       - /certs:/certs
@@ -165,7 +161,7 @@ services:
     env_file:
       - vars/mta.env
       - vars/ssl.env
-      - vars/db.env
+      - vars/openldap.env
       - .env
     ports:
       - "25:25"
@@ -176,7 +172,7 @@ services:
       - /certs:/certs
       - spool:/var/spool/
     depends_on:
-      - db
+      - openldap
       - mda
       - amavis
       - clamav
@@ -194,14 +190,14 @@ services:
     hostname: mua
     restart: always
     env_file:
-      - vars/db.env
+      - vars/openldap.env
       - vars/amavis.env
       - .env
     volumes:
       - /var/log:/var/log
       - vmail:/home/vmail
     depends_on:
-      - db
+      - openldap
     networks:
       - maild
     logging: # See https://docs.docker.com/config/containers/logging/syslog/
