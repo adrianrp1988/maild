@@ -4,5 +4,3 @@ ldata/*
 test.sh
 snappymail-*
 mua/snappymail-*
-postfixadmin-*
-admin/postfixadmin-*
