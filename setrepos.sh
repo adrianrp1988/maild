@@ -16,12 +16,11 @@
 
 # Docker dirs as an array to be iterated
 declare -a UBUNTU_DOCKERDIRS=("amavis" "clamav" "cron" "mda" "mta" "spamd")
-declare -a DEBIAN_DOCKERDIRS=("admin" "db" "mua")
+declare -a DEBIAN_DOCKERDIRS=("mua")
 declare -a LOC_INT=("admin" "mua")
 UBUNTU_SOURCES="sources.list_ubuntu"
 DEBIAN_SOURCES="sources.list_debian"
 SNAPPY_VERSION=$(grep "ARG SNAPPY_VERSION" mua/Dockerfile | cut -d "=" -f2)
-POSTFIXADMIN_VERSION=$(grep "ARG POSTFIXADMIN_VERSION" admin/internet.Dockerfile | cut -d "=" -f2)
 
 # Check if any parameter is passed
 if [ -z "$1" ]; then
@@ -35,7 +34,6 @@ if [ -z "$1" ]; then
 
     # copy localfiles
     cp snappymail-${SNAPPY_VERSION}.tar.gz ./mua/
-    cp postfixadmin-${POSTFIXADMIN_VERSION}.tar.gz ./admin/
 
     # iterate over the debian docker dirs, copy the sources.list and set the COPY statement 
     for DIR in "${DEBIAN_DOCKERDIRS[@]}"; do
@@ -65,10 +63,6 @@ if [ -z "$1" ]; then
     if [ ! -f "snappymail-${SNAPPY_VERSION}.tar.gz" ]; then
         # Download snappymail
         wget https://github.com/the-djmaze/snappymail/releases/download/v${SNAPPY_VERSION}/snappymail-${SNAPPY_VERSION}.tar.gz
-    fi
-    if [ ! -f "postfixadmin-${POSTFIXADMIN_VERSION}.tar.gz" ]; then
-        # download postfixadmin
-        wget "https://github.com/postfixadmin/postfixadmin/archive/postfixadmin-${POSTFIXADMIN_VERSION}.tar.gz"
     fi
 else
     # Remove repositories

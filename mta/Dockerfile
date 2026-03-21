@@ -16,11 +16,11 @@ RUN apt-get update && \
     apt-get install -y \
         postfix \
         postfix-pcre \
-        postfix-pgsql \
+        postfix-ldap \
         postfix-policyd-spf-python  \
         net-tools \
         netcat \
-        postgresql-client \
+        ldap-utils \
         bind9-host && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*

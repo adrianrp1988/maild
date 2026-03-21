@@ -14,10 +14,11 @@ if [ ! -f /etc/dovecot/configured ]; then
     # #TODO
     echo "DEFAULT_MAILBOX_SIZE=${DEFAULT_MAILBOX_SIZE}" >> "${CFILE}"
     # DB
-    echo "POSTGRES_USER=${POSTGRES_USER}" >> "${CFILE}"
-    echo "POSTGRES_DB=${POSTGRES_DB}" >> "${CFILE}"
-    echo "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}" >> "${CFILE}"
-    echo "POSTGRES_HOST=${POSTGRES_HOST}" >> "${CFILE}"
+    echo "LDAPURI=${LDAP_URI}" >> "${CFILE}"
+    echo "LDAPSEARCHBASE=${LDAP_SEARCH_BASE}" >> "${CFILE}"
+    echo "LDAPBINDUSER=${LDAP_READONLY_USER_USERNAME}" >> "${CFILE}"
+    echo "LDAPBINDPASSWD=\"${LDAP_READONLY_USER_PASSWORD}\"" >> "${CFILE}"
+
 
     # config dump
     if [ "${MDA_DEBUG_INIT}" ] ; then
@@ -58,6 +59,20 @@ if [ ! -f /etc/dovecot/configured ]; then
         echo "DHparam already present, skiping generation!"
     fi
 
+    # provision openldap certs
+    OPENLDAP=`echo "${POSTFIX_LDAP_URI}" | cut -d "/" -f 3 | cut -d ":" -f 1 `
+    echo "Using ${OPENLDAP} as openldap service"
+
+    echo "Get & Install of the ssl cert for the LDAP connections"
+    echo | openssl s_client -connect ${OPENLDAP}:636 2>&1 | sed --quiet '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > /etc/ssl/certs/openldap.crt
+    cat /etc/ssl/certs/openldap.crt | head -n 3
+
+    # install the cert into the LDAP client setting
+    cat /etc/ldap/ldap.conf | grep -v TLS_CACERT > /tmp/1
+    echo "TLS_CACERT /etc/ssl/certs/samba.crt" >> /tmp/1
+    cat /tmp/1 > /etc/ldap/ldap.conf
+    rm /tmp/1
+    
     # debug
     if [ "${MDA_DEBUG_AUTH}" ]; then
         # set auth_verbose & auth_debug to yes

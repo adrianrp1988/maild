@@ -10,12 +10,7 @@ cd /etc/amavis
 rm -rdf conf.d
 cp -rfv conf.default conf.d
 
-# postgresql data
 CFILE=/tmp/config.local
-echo "POSTGRES_HOST=${POSTGRES_HOST}" > "${CFILE}"
-echo "POSTGRES_DB=${POSTGRES_DB}" >> "${CFILE}"
-echo "POSTGRES_USER=${POSTGRES_USER}" >> "${CFILE}"
-echo "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}" >> "${CFILE}"
 echo "MTA=${MTA}" >> "${CFILE}"
 MTAIP=`host ${MTA} | awk '/has address/ { print $4 }'`
 echo "MTAIP=${MTAIP}" >> "${CFILE}"
@@ -105,15 +100,11 @@ fi
 
 # for the dkim functionality
 function get_domains() {
-    # query to get the domains
-    QUERY="SELECT domain FROM domain;"
-
-    # craft the auth credentials & secure it
-    echo "$POSTGRES_HOST:5432:$POSTGRES_DB:$POSTGRES_USER:$POSTGRES_PASSWORD" > ~/.pgpass
-    chmod 0600 ~/.pgpass &1>2
-
-    # Run psql command to connect to database and run query
-    psql -h $POSTGRES_HOST -d $POSTGRES_DB -U $POSTGRES_USER -c "$QUERY" -w > /tmp/domains.txt
+    ldapsearch -x -H ldap://${LDAP_URI} -D "${LDAP_READONLY_USER_USERNAME}" -w "${LDAP_READONLY_USER_PASSWORD}" -b "${LDAP_BASE_DN}" "(objectClass=domain)" dn \
+    | grep '^dn:' \
+    | sed -E 's/^dn: dc=([^.]+),dc=([^.]+)$/\1.\2/' \
+    | xargs
+    > /tmp/domains.txt
 
     # validate
     R=$?
@@ -127,17 +118,6 @@ function get_domains() {
         echo "DB query result dump:" >&2
         cat /tmp/domains.txt >&2
     fi
-
-    # output format
-    #  domain  
-    #----------
-    # ALL
-    # sample1.com.jm
-    # exercises.jm
-    #(2 rows)
-
-    # match any domain like string on the results
-    cat /tmp/domains.txt | grep -E '\b[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b' | tr -d ' ' | xargs
 }
 
 # for the dkim functionality
@@ -151,6 +131,7 @@ mkdir -p /var/lib/amavis/dkim
 # this file will hold the selector and domain for all configured ones
 DKIM_LIST=/var/lib/amavis/dkim/db.txt
 touch $DKIM_LIST
+
 
 # if dkim signing enabled
 if [ "${DKIM_SIGNING}" ] ; then

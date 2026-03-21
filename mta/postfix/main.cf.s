@@ -98,8 +98,8 @@ smtpd_helo_restrictions =
 
 # Users mapping login vs email
 # to avoid user1@ can send as user2@
-smtpd_sender_login_maps = proxy:pgsql:/etc/postfix/pgsql/virtual_email2user.cf
-relay_recipient_maps = proxy:pgsql:/etc/postfix/pgsql/virtual_email2user.cf
+smtpd_sender_login_maps = ldap:/etc/postfix/ldap/virtual_email2user.cf
+relay_recipient_maps = ldap:/etc/postfix/ldap/virtual_email2user.cf
 
 # error misc
 smtpd_error_sleep_time = 1s
@@ -191,10 +191,12 @@ receive_override_options = no_address_mappings
 # debug_peer_level = 16
 
 # virtual domains linking
-virtual_mailbox_domains = proxy:pgsql:/etc/postfix/pgsql/virtual_domains_maps.cf
-virtual_mailbox_maps = proxy:pgsql:/etc/postfix/pgsql/virtual_mailbox_maps.cf
-virtual_alias_maps = proxy:pgsql:/etc/postfix/pgsql/virtual_alias_maps.cf
-relay_domains = $mydestination, proxy:pgsql:/etc/postfix/pgsql/relay_domains.cf
+virtual_mailbox_domains = _DOMAIN_
+virtual_mailbox_maps = ldap:/etc/postfix/ldap/virtual_mailbox_maps.cf
+virtual_alias_maps = ldap:/etc/postfix/ldap/virtual_alias_maps.cf
+
+#TODO: add multidomain feature; appending this and implementing the query, ldap:/etc/postfix/ldap/relay_domains.cf
+relay_domains = $mydestination
 virtual_mailbox_base = /home/vmail
 virtual_minimum_uid = 100
 virtual_uid_maps = static:5000

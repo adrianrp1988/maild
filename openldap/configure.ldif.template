@@ -1,0 +1,100 @@
+
+# Crear la OU "people"
+dn: ou=people,{{LDAP_BASE_DN}}
+changetype: add
+objectClass: top
+objectClass: organizationalUnit
+ou: people
+description: Usuarios del sistema
+
+# Crear la OU "groups"
+dn: ou=groups,{{LDAP_BASE_DN}}
+changetype: add
+objectClass: top
+objectClass: organizationalUnit
+ou: groups
+description: Grupos del sistema
+
+# Grupo admins
+dn: cn=admins,ou=groups,{{LDAP_BASE_DN}}
+changetype: add
+objectClass: top
+objectClass: posixGroup
+objectClass: groupOfUniqueNames
+cn: admins
+gidNumber: 5000
+description: Grupo de administradores con permisos especiales
+uniqueMember: cn=placeholder 
+
+# Grupo everybody
+dn: cn=everybody,ou=groups,{{LDAP_BASE_DN}}
+changetype: add
+objectClass: top
+objectClass: posixGroup
+objectClass: groupOfUniqueNames
+cn: everybody
+gidNumber: 5001
+uniqueMember: cn=placeholder
+
+#Crear la entrada del administrador
+dn: uid={{MAIL_ADMIN_USER}},ou=people,{{LDAP_BASE_DN}}
+changetype: add
+objectClass: top
+objectClass: person
+objectClass: inetOrgPerson
+objectClass: posixAccount
+uid: {{MAIL_ADMIN_USER}}
+givenName: {{MAIL_ADMIN_USER}}
+cn: {{MAIL_ADMIN_USER}}
+mail: {{MAIL_ADMIN_USER}}@{{LDAP_BASE_DN}}
+uidNumber: 2000
+gidNumber: 5001
+loginShell: /bin/bash
+homeDirectory: /home/{{MAIL_ADMIN_USER}}
+userPassword: {{ADMIN_HASH}}
+
+# Reemplazar el placeholder con el usuario real
+dn: cn=admins,ou=groups,{{LDAP_BASE_DN}}
+changetype: modify
+delete: uniqueMember
+uniqueMember: cn=placeholder
+-
+add: uniqueMember
+uniqueMember: uid={{MAIL_ADMIN_USER}},ou=people,{{LDAP_BASE_DN}}
+
+
+dn: cn=everybody,ou=groups,{{LDAP_BASE_DN}}
+changetype: modify
+delete: uniqueMember
+uniqueMember: cn=placeholder               
+-
+add: uniqueMember
+uniqueMember: uid={{MAIL_ADMIN_USER}},ou=people,{{LDAP_BASE_DN}}
+
+# lastGID
+dn: cn=lastGID,{{LDAP_BASE_DN}}
+changetype: add
+objectClass: device
+objectClass: top
+description: Records the last GID used to create a Posix group. This prevents the re-use of a GID from a deleted group.
+cn: lastGID
+serialNumber: 5001
+
+# lastUID
+dn: cn=lastUID,{{LDAP_BASE_DN}}
+changetype: add
+objectClass: device
+objectClass: top
+description: Records the last UID used to create a Posix account. This prevents the re-use of a UID from a deleted account.
+cn: lastUID
+serialNumber: 2000
+
+# Modificar permisos
+dn: olcDatabase={1}mdb,cn=config
+changetype: modify
+delete: olcAccess
+-
+add: olcAccess
+olcAccess: {0}to * by dn.exact=gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth manage by * break
+olcAccess: {1}to attrs=userPassword,shadowLastChange by self write by dn="{{LDAP_ADMIN_DN}}" write by group.exact="cn=admins,ou=groups,{{LDAP_BASE_DN}}" write by anonymous auth by * none
+olcAccess: {2}to * by self read by dn="{{LDAP_ADMIN_DN}}" write by group.exact="cn=admins,ou=groups,{{LDAP_BASE_DN}}" write by * read

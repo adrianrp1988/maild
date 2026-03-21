@@ -37,6 +37,10 @@ SYSADMINS=`echo ${MAILADMIN} | sed s/"@"/"\\\@"/`
 CFILE=/etc/postfix/config.local
 echo "DOMAIN=${DEFAULT_DOMAIN}" > "${CFILE}"
 echo "MESSAGESIZE=${MAX_MESSAGESIZE}" >> "${CFILE}"
+echo "LDAPURI=${LDAP_URI}" >> "${CFILE}"
+echo "LDAPSEARCHBASE=${LDAP_SEARCH_BASE}" >> "${CFILE}"
+echo "LDAPBINDUSER=${LDAP_READONLY_USER_USERNAME}" >> "${CFILE}"
+echo "LDAPBINDPASSWD=\"${LDAP_READONLY_USER_PASSWORD}\"" >> "${CFILE}"
 echo "HOSTNAME=${HOSTNAME}" >> "${CFILE}"
 echo "RELAY=${RELAY}" >> "${CFILE}"
 echo "ALWAYSBCC=${ALWAYS_BCC}" >> "${CFILE}"
@@ -61,11 +65,6 @@ echo $MUAIP > /tmp/MUAIP
 echo $ADMINIP > /tmp/ADMINIP
 echo $OWNIP > /tmp/OWNIP
 
-# postgresql data
-echo "POSTGRES_HOST=${POSTGRES_HOST}" >> "${CFILE}"
-echo "POSTGRES_DB=${POSTGRES_DB}" >> "${CFILE}"
-echo "POSTGRES_USER=${POSTGRES_USER}" >> "${CFILE}"
-echo "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}" >> "${CFILE}"
 # dnsbl
 echo "DNSBL_LIST='${DNSBL_LIST}'" >> "${CFILE}"
 
@@ -93,8 +92,8 @@ for v in `echo "${VARS}" | xargs` ; do
     sed s/"\_${v}\_"/"${CONT}"/g -i ${MAIN}
     sed s/"\_${v}\_"/"${CONT}"/g -i ${MASTER}
 
-    # pgsql files
-    find /etc/postfix/pgsql/ -type f -exec sed s/"\_${v}\_"/"${CONT}"/g -i {} \;
+    # ldap files
+    find /etc/postfix/ldap/ -type f -exec sed s/"\_${v}\_"/"${CONT}"/g -i {} \;
 done
 
 # check for SPF activation
@@ -157,6 +156,17 @@ echo "spamasassin:       root" >> $ALIASES
 echo "root:     $SYSADMINS" >> $ALIASES
 # apply changes
 /usr/bin/newaliases
+
+# provision openldap certs
+OPENLDAP=`echo "${POSTFIX_LDAP_URI}" | cut -d "/" -f 3 | cut -d ":" -f 1 `
+echo "Using ${OPENLDAP} as openldap service"
+
+echo "Get & Install of the ssl cert for the LDAP connections"
+echo | openssl s_client -connect ${OPENLDAP}:636 2>&1 | sed --quiet '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > /etc/ssl/certs/openldap.crt
+cat /etc/ssl/certs/openldap.crt | head -n 3
+
+# install the cert into the LDAP client setting
+echo "TLS_CACERT /etc/ssl/certs/openldap.crt" >> /etc/ldap/ldap.conf
 
 # handle abuse and postmaster locally [not by default]
 VALIASEFILE="/etc/postfix/aliases/virtual_aliases"

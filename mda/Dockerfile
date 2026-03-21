@@ -24,7 +24,7 @@ RUN apt-get update && \
         netcat \
         dovecot-pop3d \
         dovecot-imapd \
-        dovecot-pgsql \
+        dovecot-ldap \
         dovecot-sieve \
         dovecot-lmtpd \
         dovecot-managesieved
