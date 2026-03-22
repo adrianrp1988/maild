@@ -110,6 +110,7 @@ services:
     # ports:
     #   - "8060:80"
     env_file:
+      - vars/amavis.env
       - vars/mua.env
       - .env
     depends_on:
