@@ -61,9 +61,10 @@ services:
         syslog-address: "unixgram:///dev/log"
 
   openldap:
-    image: adrianp1988/openldap:latest
+    image: adrianrp1988/openldap:latest
     build: ./openldap/
     domainname: ${DEFAULT_DOMAIN}
+    container_name: maild-openldap
     restart: always
     hostname: openldap
     volumes:

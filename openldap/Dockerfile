@@ -12,8 +12,9 @@ LABEL last_modified="2026-03-21"
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-ADD configure.sh configure.ldif.template /
-RUN chmod +x /*.sh
-RUN ./configure.sh
-RUN rm /configure.sh /configure.ldif.template
+COPY docker-entrypoint.sh /usr/local/bin
+COPY maild-startup.sh maild.ldif /container/service/slapd/assets/config/bootstrap/ldif/custom/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh /container/service/slapd/assets/config/bootstrap/ldif/custom/maild-startup.sh
+
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 

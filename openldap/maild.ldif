@@ -1,6 +1,5 @@
-
 # Crear la OU "people"
-dn: ou=people,{{LDAP_BASE_DN}}
+dn: ou=people,{{ LDAP_BASE_DN }}
 changetype: add
 objectClass: top
 objectClass: organizationalUnit
@@ -8,7 +7,7 @@ ou: people
 description: Usuarios del sistema
 
 # Crear la OU "groups"
-dn: ou=groups,{{LDAP_BASE_DN}}
+dn: ou=groups,{{ LDAP_BASE_DN }}
 changetype: add
 objectClass: top
 objectClass: organizationalUnit
@@ -16,7 +15,7 @@ ou: groups
 description: Grupos del sistema
 
 # Grupo admins
-dn: cn=admins,ou=groups,{{LDAP_BASE_DN}}
+dn: cn=admins,ou=groups,{{ LDAP_BASE_DN }}
 changetype: add
 objectClass: top
 objectClass: posixGroup
@@ -27,7 +26,7 @@ description: Grupo de administradores con permisos especiales
 uniqueMember: cn=placeholder 
 
 # Grupo everybody
-dn: cn=everybody,ou=groups,{{LDAP_BASE_DN}}
+dn: cn=everybody,ou=groups,{{ LDAP_BASE_DN }}
 changetype: add
 objectClass: top
 objectClass: posixGroup
@@ -37,7 +36,7 @@ gidNumber: 5001
 uniqueMember: cn=placeholder
 
 #Crear la entrada del administrador
-dn: uid={{MAIL_ADMIN_USER}},ou=people,{{LDAP_BASE_DN}}
+dn: uid={{MAIL_ADMIN_USER}},ou=people,{{ LDAP_BASE_DN }}
 changetype: add
 objectClass: top
 objectClass: person
@@ -45,8 +44,9 @@ objectClass: inetOrgPerson
 objectClass: posixAccount
 uid: {{MAIL_ADMIN_USER}}
 givenName: {{MAIL_ADMIN_USER}}
+sn: admin
 cn: {{MAIL_ADMIN_USER}}
-mail: {{MAIL_ADMIN_USER}}@{{LDAP_BASE_DN}}
+mail: {{MAIL_ADMIN_USER}}@{{ LDAP_BASE_DN }}
 uidNumber: 2000
 gidNumber: 5001
 loginShell: /bin/bash
@@ -54,25 +54,25 @@ homeDirectory: /home/{{MAIL_ADMIN_USER}}
 userPassword: {{ADMIN_HASH}}
 
 # Reemplazar el placeholder con el usuario real
-dn: cn=admins,ou=groups,{{LDAP_BASE_DN}}
+dn: cn=admins,ou=groups,{{ LDAP_BASE_DN }}
 changetype: modify
 delete: uniqueMember
 uniqueMember: cn=placeholder
 -
 add: uniqueMember
-uniqueMember: uid={{MAIL_ADMIN_USER}},ou=people,{{LDAP_BASE_DN}}
+uniqueMember: uid={{MAIL_ADMIN_USER}},ou=people,{{ LDAP_BASE_DN }}
 
 
-dn: cn=everybody,ou=groups,{{LDAP_BASE_DN}}
+dn: cn=everybody,ou=groups,{{ LDAP_BASE_DN }}
 changetype: modify
 delete: uniqueMember
 uniqueMember: cn=placeholder               
 -
 add: uniqueMember
-uniqueMember: uid={{MAIL_ADMIN_USER}},ou=people,{{LDAP_BASE_DN}}
+uniqueMember: uid={{MAIL_ADMIN_USER}},ou=people,{{ LDAP_BASE_DN }}
 
 # lastGID
-dn: cn=lastGID,{{LDAP_BASE_DN}}
+dn: cn=lastGID,{{ LDAP_BASE_DN }}
 changetype: add
 objectClass: device
 objectClass: top
@@ -81,7 +81,7 @@ cn: lastGID
 serialNumber: 5001
 
 # lastUID
-dn: cn=lastUID,{{LDAP_BASE_DN}}
+dn: cn=lastUID,{{ LDAP_BASE_DN }}
 changetype: add
 objectClass: device
 objectClass: top
@@ -96,5 +96,5 @@ delete: olcAccess
 -
 add: olcAccess
 olcAccess: {0}to * by dn.exact=gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth manage by * break
-olcAccess: {1}to attrs=userPassword,shadowLastChange by self write by dn="{{LDAP_ADMIN_DN}}" write by group.exact="cn=admins,ou=groups,{{LDAP_BASE_DN}}" write by anonymous auth by * none
-olcAccess: {2}to * by self read by dn="{{LDAP_ADMIN_DN}}" write by group.exact="cn=admins,ou=groups,{{LDAP_BASE_DN}}" write by * read
+olcAccess: {1}to attrs=userPassword,shadowLastChange by self write by dn="cn=admin,{{ LDAP_BASE_DN }}" write by group.exact="cn=admins,ou=groups,{{ LDAP_BASE_DN }}" write by anonymous auth by * none
+olcAccess: {2}to * by self read by dn="cn=admin,{{ LDAP_BASE_DN }}" write by group.exact="cn=admins,ou=groups,{{ LDAP_BASE_DN }}" write by * read
