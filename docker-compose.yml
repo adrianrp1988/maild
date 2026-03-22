@@ -34,32 +34,6 @@ services:
       options:
         syslog-address: "unixgram:///dev/log"
 
-  clamav:
-    image: pavelmc/maild_clamav:latest
-    build: ./clamav/
-    domainname: ${DEFAULT_DOMAIN}
-    container_name: maild-clamav
-    hostname: clamav
-    restart: always
-    # healthcheck:  # buiilt in the image
-    #   test: [ "CMD", "./check.sh" ]
-    #   interval: 60s
-    #   retries: 3
-    #   start_period: 120s
-    env_file:
-      - vars/clamav.env
-    # ports:
-    #   - "3310"
-    volumes:
-      - clamav:/var/lib/clamav
-      - amavis:/var/lib/amavis
-    networks:
-      - maild
-    logging: # See https://docs.docker.com/config/containers/logging/syslog/
-      driver: syslog
-      options:
-        syslog-address: "unixgram:///dev/log"
-
   openldap:
     image: adrianrp1988/openldap:latest
     build: ./openldap/
@@ -97,6 +71,34 @@ services:
       - 8443:443
     networks:
       - maild
+
+  clamav:
+    image: pavelmc/maild_clamav:latest
+    build: ./clamav/
+    domainname: ${DEFAULT_DOMAIN}
+    container_name: maild-clamav
+    hostname: clamav
+    restart: always
+    # healthcheck:  # buiilt in the image
+    #   test: [ "CMD", "./check.sh" ]
+    #   interval: 60s
+    #   retries: 3
+    #   start_period: 120s
+    env_file:
+      - vars/clamav.env
+    # ports:
+    #   - "3310"
+    volumes:
+      - clamav:/var/lib/clamav
+      - amavis:/var/lib/amavis
+    networks:
+      - maild
+    logging: # See https://docs.docker.com/config/containers/logging/syslog/
+      driver: syslog
+      options:
+        syslog-address: "unixgram:///dev/log"
+
+  
 
   amavis:
     image: pavelmc/maild_amavis:latest
