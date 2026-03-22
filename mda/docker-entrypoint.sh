@@ -16,7 +16,7 @@ if [ ! -f /etc/dovecot/configured ]; then
     # DB
     echo "LDAPURI=${LDAP_URI}" >> "${CFILE}"
     echo "LDAPSEARCHBASE=${LDAP_SEARCH_BASE}" >> "${CFILE}"
-    echo "LDAPBINDUSER=${LDAP_READONLY_USER_USERNAME}" >> "${CFILE}"
+    echo "LDAPBINDUSER=cn=${LDAP_READONLY_USER_USERNAME},${LDAP_BASE_DN}" >> "${CFILE}"
     echo "LDAPBINDPASSWD=\"${LDAP_READONLY_USER_PASSWORD}\"" >> "${CFILE}"
 
 
